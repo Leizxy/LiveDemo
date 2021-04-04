@@ -18,11 +18,15 @@ class LivePusher(
     private val bitrate: Int = 800_000,
     private val fps: Int = 10,
     private val cameraId: Int = CameraSelector.LENS_FACING_BACK,
-    private val previewView: PreviewView
+    private val previewView: PreviewView,
+    //音频参数
+    private val sampleRate: Int = 44100,
+    private val channels: Int = 2
 ) {
     private var url: String? = null
     private var isStart: Boolean = false
     private var videoChannel: VideoChannel
+    private var audioChannel: AudioChannel
 
     companion object {
         init {
@@ -34,6 +38,7 @@ class LivePusher(
         native_init()
         videoChannel =
             VideoChannel(context, previewView, this, width, height, bitrate, fps, cameraId)
+        audioChannel = AudioChannel(sampleRate, channels, this)
     }
 
     fun startLive(url: String) {
@@ -41,6 +46,7 @@ class LivePusher(
             this.url = url
             native_start(url)
             videoChannel.startLive()
+            audioChannel.startLive()
             isStart = true
         }
     }
@@ -50,6 +56,7 @@ class LivePusher(
             url?.apply {
                 native_start(this)
                 videoChannel.startLive()
+                audioChannel.startLive()
             }
         }
     }
@@ -58,6 +65,7 @@ class LivePusher(
         if (isStart) {
             native_stop()
             videoChannel.stopLive()
+            audioChannel.stopLive()
         }
     }
 
@@ -65,6 +73,7 @@ class LivePusher(
         if (isStart) {
             native_stop()
             videoChannel.stopLive()
+            audioChannel.stopLive()
             isStart = false
         }
     }
@@ -79,7 +88,7 @@ class LivePusher(
 
     external fun native_start(url: String)
 
-    external fun native_setAudioEncodeInfo(sampleRate: Int, channels: Int)
+    external fun native_setAudioEncodeInfo(sampleRate: Int, channels: Int): Int
 
     external fun native_pushVideo(data: ByteArray)
 

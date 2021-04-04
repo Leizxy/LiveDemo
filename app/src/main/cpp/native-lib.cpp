@@ -3,9 +3,11 @@
 #include "VideoChannel.h"
 #include "mylog.h"
 #include "safe_queue.h"
+#include "AudioChannel.h"
 #include <pthread.h>
 
 VideoChannel *videoChannel = 0;
+AudioChannel *audioChannel = 0;
 int isStart = 0;
 //记录子线程对象
 pthread_t pid = 0;
@@ -28,7 +30,7 @@ void releasePackets(RTMPPacket *packet) {
     }
 }
 
-void videoCallback(RTMPPacket *packet) {
+void dataCallback(RTMPPacket *packet) {
     if (packet) {
         if (packets.size() > 50) {
             packets.clear();
@@ -72,6 +74,9 @@ void *start(void *args) {
         packets.setWork(1);
         RTMPPacket *packet = 0;
 
+        RTMPPacket *audioHeader = audioChannel->getAudioConfig();
+        dataCallback(audioHeader);
+
         while (isStart) {
             packets.pop(packet);
             if (!isStart) {
@@ -109,7 +114,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_cn_leizy_live_LivePusher_native_1init(JNIEnv *env, jobject thiz) {
     videoChannel = new VideoChannel;
-    videoChannel->setVideoCallback(videoCallback);
+    videoChannel->setVideoCallback(dataCallback);
 }extern "C"
 JNIEXPORT void JNICALL
 Java_cn_leizy_live_LivePusher_native_1setVideoEncodeInfo(JNIEnv *env, jobject thiz, jint width,
@@ -129,10 +134,14 @@ Java_cn_leizy_live_LivePusher_native_1start(JNIEnv *env, jobject thiz, jstring p
     pthread_create(&pid, 0, start, url);
     env->ReleaseStringUTFChars(path_, path);
 }extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_cn_leizy_live_LivePusher_native_1setAudioEncodeInfo(JNIEnv *env, jobject thiz,
                                                          jint sample_rate, jint channels) {
-
+    //初始化faac编码 音频
+    audioChannel = new AudioChannel();
+    audioChannel->setCallback(dataCallback);
+    audioChannel->openCodec(sample_rate, channels);
+    return audioChannel->getInputByteNum();
 }extern "C"
 JNIEXPORT void JNICALL
 Java_cn_leizy_live_LivePusher_native_1pushVideo(JNIEnv *env, jobject thiz, jbyteArray data_) {
@@ -149,10 +158,27 @@ Java_cn_leizy_live_LivePusher_native_1stop(JNIEnv *env, jobject thiz) {
 }extern "C"
 JNIEXPORT void JNICALL
 Java_cn_leizy_live_LivePusher_native_1release(JNIEnv *env, jobject thiz) {
-
+    if (rtmp) {
+        RTMP_Close(rtmp);
+        RTMP_Free(rtmp);
+        rtmp = 0;
+    }
+    if (videoChannel) {
+        delete (videoChannel);
+        videoChannel = 0;
+    }
+    if (audioChannel) {
+        delete (audioChannel);
+        audioChannel = 0;
+    }
 }extern "C"
 JNIEXPORT void JNICALL
 Java_cn_leizy_live_LivePusher_native_1pushAudio(JNIEnv *env, jobject thiz, jbyteArray buffer,
                                                 jint len) {
-
+    if (!audioChannel || !readyPushing) {
+        return;
+    }
+    jbyte *data = env->GetByteArrayElements(buffer, 0);
+    audioChannel->encode(reinterpret_cast<int32_t *>(data), len);
+    env->ReleaseByteArrayElements(buffer, data, 0);
 }

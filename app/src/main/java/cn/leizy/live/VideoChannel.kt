@@ -152,7 +152,7 @@ class VideoChannel(
                 nv21_rotated = ByteArray(height * width * 3 / 2)
             }
             ImageUtil.yuvToNv21(y, u, v, nv21, height, width)
-            JImageUtil.nv21_rotate_to_90(nv21, nv21_rotated, height, width)//todo rotate
+            ImageUtil.nv21_rotate_to_90(nv21, nv21_rotated, height, width)//todo rotate
             pusher.native_pushVideo(nv21_rotated)
         }
         lock.unlock()

@@ -84,16 +84,16 @@ void VideoChannel::encodeData(int8_t *data) {
     x264_picture_t pic_out;
     //yuv数据转化x264
     x264_encoder_encode(videoCodec, &pp_nals, &pi_nal, pic_in, &pic_out);
-    LOGW("videoCodec value %d ", videoCodec);
+//    LOGW("videoCodec value %d ", videoCodec);
 
     uint8_t sps[100];
     uint8_t pps[100];
 
     int sps_len, pps_len;
-    LOGW("编码出的帧数 %d", pi_nal);
+//    LOGW("编码出的帧数 %d", pi_nal);
     if (pi_nal > 0) {
         for (int i = 0; i < pi_nal; ++i) {
-            LOGE("i : %d; length : %d", i, pi_nal);
+//            LOGE("i : %d; length : %d", i, pi_nal);
             if (pp_nals[i].i_type == NAL_SPS) {
                 sps_len = pp_nals[i].i_payload - 4;
                 memcpy(sps, pp_nals[i].p_payload + 4, sps_len);
@@ -106,7 +106,7 @@ void VideoChannel::encodeData(int8_t *data) {
             }
         }
     }
-    LOGE("pi_nal %d", pi_nal);
+//    LOGE("pi_nal %d", pi_nal);
 }
 
 void VideoChannel::sendSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_len) {

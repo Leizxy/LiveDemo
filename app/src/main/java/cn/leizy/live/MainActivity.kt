@@ -30,7 +30,8 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.CAMERA
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO
                 ), 1
             )
         }
@@ -38,16 +39,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        resumeLive()
-    }
-
-    private fun resumeLive() {
         livePusher.resumeLive()
     }
 
     override fun onStop() {
         super.onStop()
         livePusher.pauseLive()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        livePusher.native_release()
     }
 
     fun startLive(view: View) {
