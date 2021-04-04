@@ -1,9 +1,10 @@
 package cn.leizy.live
 
-import android.util.DisplayMetrics
 import androidx.camera.core.CameraSelector
 import androidx.camera.view.PreviewView
 import androidx.core.app.ComponentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 
 /**
  * @author wulei
@@ -19,6 +20,8 @@ class LivePusher(
     private val cameraId: Int = CameraSelector.LENS_FACING_BACK,
     private val previewView: PreviewView
 ) {
+    private var url: String? = null
+    private var isStart: Boolean = false
     private var videoChannel: VideoChannel
 
     companion object {
@@ -33,17 +36,40 @@ class LivePusher(
             VideoChannel(context, previewView, this, width, height, bitrate, fps, cameraId)
     }
 
-    fun startLive(url:String){
-        native_start(url)
-        videoChannel.startLive()
+    fun startLive(url: String) {
+        if (!isStart) {
+            this.url = url
+            native_start(url)
+            videoChannel.startLive()
+            isStart = true
+        }
     }
 
-    fun stopLive(){
-        native_stop()
-        videoChannel.stopLive()
+    fun resumeLive() {
+        if (isStart) {
+            url?.apply {
+                native_start(this)
+                videoChannel.startLive()
+            }
+        }
     }
 
-    fun switchCamera(){
+    fun pauseLive() {
+        if (isStart) {
+            native_stop()
+            videoChannel.stopLive()
+        }
+    }
+
+    fun stopLive() {
+        if (isStart) {
+            native_stop()
+            videoChannel.stopLive()
+            isStart = false
+        }
+    }
+
+    fun switchCamera() {
         videoChannel.switchCamera()
     }
 

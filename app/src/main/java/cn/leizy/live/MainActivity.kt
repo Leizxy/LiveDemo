@@ -13,7 +13,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var livePusher: LivePusher
     private lateinit var binding: ActivityMainBinding
 
-    private val url: String = ""
+    private val url: String =
+        "rtmp://live-push.bilivideo.com/live-bvc/?streamname=live_8379703_1896767&key=167ddc29b2d089fe2e43f58fe3b8c36d&schedule=rtmp&pflag=1"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,17 +36,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
+    override fun onResume() {
+        super.onResume()
+        resumeLive()
+    }
 
-    companion object {
-        // Used to load the 'native-lib' library on application startup.
-        init {
-            System.loadLibrary("native-lib")
-        }
+    private fun resumeLive() {
+        livePusher.resumeLive()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        livePusher.pauseLive()
     }
 
     fun startLive(view: View) {

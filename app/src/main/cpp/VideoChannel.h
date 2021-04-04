@@ -11,6 +11,8 @@
 
 
 class VideoChannel {
+    typedef void (*VideoCallback)(RTMPPacket *packet);
+
 public:
     VideoChannel();
 
@@ -21,9 +23,11 @@ public:
 
     void encodeData(int8_t *data);
 
-    void sendSpsPps(uint8_t *sps, uint8_t *pps, int len, int pps_len);
+    void sendSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_len);
 
     void sendFrame(int type, int payload, uint8_t *p_payload);
+
+    void setVideoCallback(VideoCallback callback);
 
 private:
     int mWidth;
@@ -37,6 +41,7 @@ private:
     int uvSize;
 
     x264_t *videoCodec = 0;
+    VideoCallback callback;
 };
 
 

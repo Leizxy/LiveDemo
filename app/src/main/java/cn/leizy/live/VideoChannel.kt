@@ -126,15 +126,18 @@ class VideoChannel(
     }
 
     override fun analyze(image: ImageProxy) {
-        Log.i("VideoChannel", "analyze: ${image.width} X ${image.height}")
-        if (!isLiving) return
+//        Log.i("VideoChannel", "analyze: ${image.width} X ${image.height}")
+        if (!isLiving) {
+            image.close()
+            return
+        }
         lock.lock()
         val planes = image.planes
         if (!this::y.isInitialized) {
             y = ByteArray(planes[0].buffer.limit() - planes[0].buffer.position())
             u = ByteArray(planes[1].buffer.limit() - planes[1].buffer.position())
             v = ByteArray(planes[2].buffer.limit() - planes[2].buffer.position())
-            pusher.native_setVideoEncodeInfo(image.width, image.height, fps, bitrate)
+            pusher.native_setVideoEncodeInfo(image.height, image.width, fps, bitrate)//todo rotate控制
         }
         if (image.planes[0].buffer.remaining() == y.size) {
             planes[0].buffer.get(y)
@@ -149,10 +152,11 @@ class VideoChannel(
                 nv21_rotated = ByteArray(height * width * 3 / 2)
             }
             ImageUtil.yuvToNv21(y, u, v, nv21, height, width)
-            ImageUtil.nv21_rotate_to_90(nv21, nv21_rotated, height, width)
+            JImageUtil.nv21_rotate_to_90(nv21, nv21_rotated, height, width)//todo rotate
             pusher.native_pushVideo(nv21_rotated)
         }
         lock.unlock()
+        image.close()
     }
 
     fun switchCamera() {
