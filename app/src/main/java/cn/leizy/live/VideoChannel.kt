@@ -159,7 +159,13 @@ class VideoChannel(
         image.close()
     }
 
+    //切换前置后，画面反转。需旋转180
     fun switchCamera() {
-
+        lensFacing =
+            if (lensFacing == CameraSelector.LENS_FACING_BACK)
+                CameraSelector.LENS_FACING_FRONT
+            else
+                CameraSelector.LENS_FACING_BACK
+        bindCameraUseCases()
     }
 }
